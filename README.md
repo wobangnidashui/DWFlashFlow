@@ -1,4 +1,6 @@
-# DWFlashFlow
+<p align="center" >
+<img src="https://github.com/CodeWicky/DWFlashFlow/raw/master/DWFlashFlow.png" width=522px height=144px alt="DWLogger" title="DWLogger">
+</p>
 
 ## 描述
 数据请求框架封装，具有NSOperation系统行为，可方便的进行线程间通信。
