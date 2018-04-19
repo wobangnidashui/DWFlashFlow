@@ -217,12 +217,12 @@ Some ohter function you may look up the note in `.h` file.
 
 ## 联系作者
 
-你可以通过在[我的Github](https://github.com/CodeWicky/DWFlashFlow)上给我留言或者给我发送电子邮件[codeWicky@163.com](codeWicky@163.com)来给我提一些建议或者指出我的bug,我将不胜感激。
+你可以通过在[我的Github](https://github.com/CodeWicky/DWFlashFlow)上给我留言或者给我发送电子邮件 codeWicky@163.com 来给我提一些建议或者指出我的bug,我将不胜感激。
 
 如果你喜欢这个小东西，记得给我一个star吧，么么哒~
 
 ## Contact With Me
-You may issue me on [my Github](https://github.com/CodeWicky/DWFlashFlow) or send me a email at [codeWicky@163.com](codeWicky@163.com) to tell me some advices or the bug,I will be so appreciated.
+You may issue me on [my Github](https://github.com/CodeWicky/DWFlashFlow) or send me a email at  codeWicky@163.com  to tell me some advices or the bug,I will be so appreciated.
 
 If you like it please give me a star.
 
