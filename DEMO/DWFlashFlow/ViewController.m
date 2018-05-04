@@ -19,6 +19,9 @@
     [super viewDidLoad];
 //    [self singleRequest];
     [self addRequestDependency];
+    
+    
+    
 //    [self batchRequest];
 //    [self requestChain];
 }

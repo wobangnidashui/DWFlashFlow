@@ -30,6 +30,7 @@
 -(void)sendRequest:(DWFlashFlowRequest *)request progress:(ProgressCallback)progress completion:(Completion)completion {
     DWNetworkAFNManager * manager = managerFromRequest(request);
     manager.requestSerializer = requestSerializerFromType(request.requestSerializerType);
+    manager.requestSerializer.timeoutInterval = request.timeoutInterval;
     manager.responseSerializer = responseSerializerFromType(request.responseSerializerType);
     NSString * urlString = request.configuration.actualURL;
     NSString * method = [self methodFromRequest:request];
@@ -235,7 +236,6 @@ static inline void configRequestWithResumeData(DWFlashFlowRequest * r,NSData * r
 
 static inline DWNetworkAFNManager * managerFromRequest(DWFlashFlowRequest * r) {
     DWNetworkAFNManager * m = [DWNetworkAFNManager manager];
-    m.timeoutInterval = r.timeoutInterval;
     m.userName = r.userName;
     m.password = r.password;
     return m;

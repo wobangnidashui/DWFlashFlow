@@ -48,6 +48,13 @@ typedef NS_ENUM(NSUInteger, DWFlashFlowResponseSerializerType) {///响应解析�
     DWFlashFlowResponseSerializerTypeRaw,
 };
 
+typedef NS_ENUM(NSUInteger, DWFlashFlowCachePolicy) {///缓存策略
+    DWFlashFlowCachePolicyLoadOnly,
+    DWFlashFlowCachePolicyLocalThenLoad,
+    DWFlashFlowCachePolicyLocalElseLoad,
+    DWFlashFlowCachePolicyLocalOnly,
+};
+
 @class DWFlashFlowRequest;
 ///下载文件存储路径回调
 typedef NSURL * (^DestinationCallback)(NSURL *targetPath, NSURLResponse *response);

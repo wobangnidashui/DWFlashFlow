@@ -23,6 +23,7 @@
 		214AD006206A4D3C007A41A4 /* DWFlashFlowAFNLinker.m in Sources */ = {isa = PBXBuildFile; fileRef = 214ACFFC206A4D3C007A41A4 /* DWFlashFlowAFNLinker.m */; };
 		214AD007206A4D3C007A41A4 /* DWFlashFlowManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 214ACFFE206A4D3C007A41A4 /* DWFlashFlowManager.m */; };
 		C881D0E959B48A55B87B3CFB /* libPods-DWFlashFlow.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90B71C2417195826ED0E4F24 /* libPods-DWFlashFlow.a */; };
+		FA7A5FE1209020C800279DBB /* DWFlashFlowCache.m in Sources */ = {isa = PBXBuildFile; fileRef = FA7A5FE0209020C800279DBB /* DWFlashFlowCache.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,6 +78,8 @@
 		214AD000206A4D3C007A41A4 /* DWFlashFlowBaseLinker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWFlashFlowBaseLinker.h; sourceTree = "<group>"; };
 		49C9A3EECC3EFA1BF3CAE01F /* Pods-DWFlashFlow.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DWFlashFlow.release.xcconfig"; path = "Pods/Target Support Files/Pods-DWFlashFlow/Pods-DWFlashFlow.release.xcconfig"; sourceTree = "<group>"; };
 		90B71C2417195826ED0E4F24 /* libPods-DWFlashFlow.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DWFlashFlow.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA7A5FDF209020C800279DBB /* DWFlashFlowCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DWFlashFlowCache.h; sourceTree = "<group>"; };
+		FA7A5FE0209020C800279DBB /* DWFlashFlowCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DWFlashFlowCache.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -189,6 +192,8 @@
 				214ACFFE206A4D3C007A41A4 /* DWFlashFlowManager.m */,
 				214ACFFF206A4D3C007A41A4 /* DWFlashFlowChainRequest.h */,
 				214AD000206A4D3C007A41A4 /* DWFlashFlowBaseLinker.h */,
+				FA7A5FDF209020C800279DBB /* DWFlashFlowCache.h */,
+				FA7A5FE0209020C800279DBB /* DWFlashFlowCache.m */,
 			);
 			name = DWFlashFlow;
 			path = ../../DWFlashFlow;
@@ -395,6 +400,7 @@
 				214AD007206A4D3C007A41A4 /* DWFlashFlowManager.m in Sources */,
 				214AD004206A4D3C007A41A4 /* DWFlashFlowChainRequest.m in Sources */,
 				214AD001206A4D3C007A41A4 /* DWFlashFlowAbstractRequest.m in Sources */,
+				FA7A5FE1209020C800279DBB /* DWFlashFlowCache.m in Sources */,
 				214AD002206A4D3C007A41A4 /* DWFlashFlowRequest.m in Sources */,
 				214ACFCF206A4BD3007A41A4 /* main.m in Sources */,
 				214ACFC1206A4BD3007A41A4 /* AppDelegate.m in Sources */,
