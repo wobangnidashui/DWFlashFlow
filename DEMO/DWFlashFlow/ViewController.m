@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "DWFlashFlow.h"
+#import "DWFlashFlowCache.h"
 
 @interface ViewController ()
 
@@ -18,12 +19,10 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 //    [self singleRequest];
-    [self addRequestDependency];
-    
-    
-    
+//    [self addRequestDependency];
 //    [self batchRequest];
 //    [self requestChain];
+    [self requestCache];
 }
 
 -(void)singleRequest {
@@ -31,6 +30,19 @@
     r.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"%@",response);
+    };
+    [r start];
+}
+
+-(void)requestCache {
+    DWFlashFlowRequest * r = [DWFlashFlowRequest new];
+    r.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
+    r.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
+        DWFlashFlowDefaultCache * c = [DWFlashFlowDefaultCache new];
+        DWFlashFlowRequest * r = request;
+        [c storeCachedResponse:response forKey:r.configuration.actualURL request:r];
+        NSDictionary * t = [c cachedResponseForKey:((DWFlashFlowRequest *)request).configuration.actualURL];
+        NSLog(@"%@",t );
     };
     [r start];
 }
