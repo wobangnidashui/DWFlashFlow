@@ -49,10 +49,11 @@ typedef NS_ENUM(NSUInteger, DWFlashFlowResponseSerializerType) {///响应解析�
 };
 
 typedef NS_ENUM(NSUInteger, DWFlashFlowCachePolicy) {///缓存策略
-    DWFlashFlowCachePolicyLoadOnly,
-    DWFlashFlowCachePolicyLocalThenLoad,
-    DWFlashFlowCachePolicyLocalElseLoad,
-    DWFlashFlowCachePolicyLocalOnly,
+    DWFlashFlowCachePolicyLoadOnly,///仅加载远端数据并且不缓存响应数据
+    DWFlashFlowCachePolicyLoadOnlyAndSave,///仅加载远端数据并且缓存响应数据
+    DWFlashFlowCachePolicyLocalThenLoad,///首先加载本地数据同时请求远端数据，请求成功后缓存响应数据并再次调用完成回调
+    DWFlashFlowCachePolicyLocalElseLoad,///优先加载本地数据，若本地数据不存在则请求远端数据，若成功则缓存数据并回调
+    DWFlashFlowCachePolicyLocalOnly,///只加载本地数据
 };
 
 @class DWFlashFlowRequest;
@@ -175,6 +176,10 @@ typedef id(^ProcessorBlock)(DWFlashFlowRequest * request,id data);
 //The actual config for request which is combined with global.
 ///request对象经过全局参数组合过得实际参数
 @property (nonatomic ,strong ,readonly) DWFlashFlowRequestConfig * configuration;
+
+//Expired time interval for response cache.
+///响应缓存过期时间
+@property (nonatomic ,assign) NSTimeInterval expiredInterval;
 
 /**
  Start a request with progressCallback and completion.

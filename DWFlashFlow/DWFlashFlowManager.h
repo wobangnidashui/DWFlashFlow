@@ -49,6 +49,14 @@
 ///根URL。与请求对象的apiURL配合使用。
 @property (nonatomic ,copy) NSString * baseURL;
 
+///Setup by developer to describe current appVersion.
+///当前应用版本号，由开发者自行设置。
+@property (nonatomic ,assign) NSInteger appVersion;
+
+//Global expired time interval for response cache.
+///全局响应缓存过期时间
+@property (nonatomic ,assign) NSTimeInterval globalExpiredInterval;
+
 //Encryptor for request.
 ///加密器
 @property (nonatomic ,strong) id<DWFlashFlowEncryptProtocol> encryptor;

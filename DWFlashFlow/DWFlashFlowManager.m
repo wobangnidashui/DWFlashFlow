@@ -543,6 +543,8 @@ static void enumerateRequest(DWFlashFlowManager * m,void(^enumerator)(NSString *
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         mgr = [[self alloc] init];
+        mgr.appVersion = -1;
+        mgr.globalExpiredInterval = 0;
     });
     return mgr;
 }
