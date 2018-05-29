@@ -8,6 +8,7 @@
 
 #import "DWFlashFlowCache.h"
 #import "DWFlashFlowManager.h"
+#import <CommonCrypto/CommonCrypto.h>
 
 #pragma mark --- Tool method ---
 
@@ -99,6 +100,9 @@ NS_INLINE NSData * dataFromCachedResponse(id cachedResponse) {
 
 ///将NSData转换为缓存的数据
 NS_INLINE id objectFromDataWithType(NSString * type,NSData * data) {
+    if (!data) {
+        return nil;
+    }
     if ([type isEqualToString:@"NSData"]) {
         return data;
     } else if ([type isEqualToString:@"NSString"]) {
@@ -182,7 +186,7 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
 
 @property (nonatomic ,strong) id cachedResponse;
 
-@property (nonatomic ,copy) NSString * cachePath;
+@property (nonatomic ,copy) NSString * md5Key;
 
 @property (nonatomic ,copy) NSString * cacheType;
 
@@ -191,6 +195,8 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
 @property (nonatomic ,strong) NSDate * createTime;
 
 @property (nonatomic ,assign) NSTimeInterval expiredInterval;
+
+@property (nonatomic ,strong) dispatch_queue_t ioQueue;
 
 @end
 
@@ -203,24 +209,29 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
     if (!validateCachedResponseType(cachedResponse)) {
         return;
     }
+    NSString * md5Key = MD5(key);
     NSTimeInterval expiredInterval = request.expiredInterval;
     if (expiredInterval == 0) {
         expiredInterval = [DWFlashFlowManager manager].globalExpiredInterval;
     }
-    NSString * cachePath = cacheFilePathWithKey(key);
+
     DWFlashFlowAdvancedCache * cache = [DWFlashFlowAdvancedCache new];
     cache.cachedResponse = cachedResponse;
-    cache.cachePath = cachePath;
+    cache.md5Key = md5Key;
     cache.cacheType = cacheType(cachedResponse);
     cache.appVersion = [DWFlashFlowManager manager].appVersion;
     cache.createTime = [NSDate date];
     cache.expiredInterval = expiredInterval;
-    [NSKeyedArchiver archiveRootObject:cache toFile:metaPathWithKey(key)];
-    writeFile2Path(cachedResponse, cacheFilePathWithKey(key));
+    dispatch_async(self.ioQueue, ^{
+        [NSKeyedArchiver archiveRootObject:cache toFile:metaPathWithKey(md5Key)];
+        writeFile2Path(cachedResponse, cacheFilePathWithKey(md5Key));
+    });
 }
 
 -(id)cachedResponseForKey:(NSString *)key {
-    DWFlashFlowAdvancedCache * cache = [NSKeyedUnarchiver unarchiveObjectWithFile:metaPathWithKey(key)];
+    NSString * md5Key = MD5(key);
+    NSString * fle = metaPathWithKey(md5Key);
+    DWFlashFlowAdvancedCache * cache = [NSKeyedUnarchiver unarchiveObjectWithFile:metaPathWithKey(md5Key)];
     if (![self validateCacheResponese:cache forKey:key]) {
         return nil;
     }
@@ -228,31 +239,125 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
 }
 
 -(void)removeCachedResponseForKey:(NSString *)key {
-    if ([[NSFileManager defaultManager] fileExistsAtPath:savePathWithKey(key)]) {
-        [[NSFileManager defaultManager] removeItemAtPath:savePathWithKey(key) error:nil];
+    NSString * md5Key = MD5(key);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:savePathWithKey(md5Key)]) {
+        dispatch_async(self.ioQueue, ^{
+            [[NSFileManager defaultManager] removeItemAtPath:savePathWithKey(md5Key) error:nil];
+        });
     }
 }
 
 -(BOOL)validateCacheResponese:(DWFlashFlowAdvancedCache *)cachedResponse forKey:(NSString *)key {
-    if (!cachedResponse) {
-        return NO;
+    
+    BOOL res = YES;
+    
+    if (res && !cachedResponse) {
+        res = NO;
     }
-    if (![cachedResponse isKindOfClass:[DWFlashFlowAdvancedCache class]]) {
-        return NO;
+    if (res && ![cachedResponse isKindOfClass:[DWFlashFlowAdvancedCache class]]) {
+        res = NO;
     }
     ///版本不对
-    if (cachedResponse.appVersion < [DWFlashFlowManager manager].appVersion) {
-        return NO;
+    if (res && cachedResponse.appVersion < [DWFlashFlowManager manager].appVersion) {
+        res = NO;
     }
     ///超时
-    if (cachedResponse.expiredInterval > 0 && [[NSDate date] timeIntervalSince1970] - [cachedResponse.createTime timeIntervalSince1970] > cachedResponse.expiredInterval) {
-        return NO;
+    if (res && cachedResponse.expiredInterval > 0 && [[NSDate date] timeIntervalSince1970] - [cachedResponse.createTime timeIntervalSince1970] > cachedResponse.expiredInterval) {
+        res = NO;
     }
     ///响应数据
-    if (!cachedResponse.cachedResponse) {
-        return NO;
+    if (res && !cachedResponse.cachedResponse) {
+        res = NO;
     }
-    return YES;
+    
+    ///缓存无效后删除缓存
+    if (!res) {
+        [self removeCachedResponseForKey:key];
+    }
+    return res;
+}
+
+#pragma mark --- tool method ---
+-(void)cleanLoalDiskCacheWithCompletion:(dispatch_block_t)completion {
+    dispatch_async(self.ioQueue, ^{
+        NSString * mainPath = savePathWithKey(@"");
+        NSURL * fileURL = [NSURL fileURLWithPath:mainPath isDirectory:YES];
+        NSArray *resourceKeys = @[NSURLIsDirectoryKey, NSURLContentModificationDateKey];
+        NSFileManager * fileMgr = [NSFileManager defaultManager];
+        
+        ///遍历文件夹
+        NSDirectoryEnumerator *fileEnumerator = [fileMgr enumeratorAtURL:fileURL includingPropertiesForKeys:resourceKeys options:NSDirectoryEnumerationSkipsHiddenFiles errorHandler:nil];
+        NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
+        NSMutableDictionary * cacheFiles = [NSMutableDictionary dictionaryWithCapacity:0];
+        NSUInteger currentSize = 0;
+        NSMutableArray * urlsToDelete = [NSMutableArray arrayWithCapacity:0];
+        for (NSURL * url in fileEnumerator) {
+            NSMutableDictionary * attr = [[url resourceValuesForKeys:resourceKeys error:nil] mutableCopy];
+            ///如果不是文件夹则跳过
+            if (![attr[NSURLIsDirectoryKey] boolValue]) {
+                continue;
+            }
+            ///如果超时则加入待删数组，并跳过
+            if (self.maxExpireInterval > 0) {
+                NSDate * modData = attr[NSURLContentModificationDateKey];
+                if (timeStamp - [modData timeIntervalSince1970] > self.maxExpireInterval) {
+                    [urlsToDelete addObject:url];
+                    continue;
+                }
+            }
+            
+            
+            
+            ///计算当前未过期的缓存总大小
+            NSUInteger totalAllocatedSize = [self calculateDirectorySizeAtUrl:url];
+            attr[NSURLTotalFileAllocatedSizeKey] = @(totalAllocatedSize);
+            currentSize += totalAllocatedSize;
+            [cacheFiles setObject:attr forKey:fileURL];
+        }
+        
+        ///删除过期缓存
+        for (NSURL * url in urlsToDelete) {
+            [fileMgr removeItemAtURL:url error:nil];
+        }
+        
+        ///如果设置了最大缓存大小则删除一部分老的缓存
+        if (self.maxCacheSize > 0 && currentSize > self.maxCacheSize) {
+            const NSUInteger desiredCacheSize = self.maxCacheSize / 2;
+            ///按最后修改时间排序
+            NSArray *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent
+                                                            usingComparator:^NSComparisonResult(id obj1, id obj2) {
+                                                                return [obj1[NSURLContentModificationDateKey] compare:obj2[NSURLContentModificationDateKey]];
+                                                            }];
+            ///删除较老的缓存并比较是否减少到指定内存大小
+            for (NSURL * url in sortedFiles) {
+                if ([fileMgr removeItemAtURL:url error:nil]) {
+                    NSDictionary *resourceValues = cacheFiles[url];
+                    NSNumber *totalAllocatedSize = resourceValues[NSURLTotalFileAllocatedSizeKey];
+                    currentSize -= [totalAllocatedSize unsignedIntegerValue];
+                    ///已经到达指定内存一版，停止删除
+                    if (currentSize < desiredCacheSize) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        !completion?:completion();
+    });
+}
+
+-(NSUInteger)calculateDirectorySizeAtUrl:(NSURL *)url {
+    NSArray *resourceKeys = @[NSURLTotalFileAllocatedSizeKey];
+    NSFileManager * fileMgr = [NSFileManager defaultManager];
+    ///遍历文件夹
+    NSDirectoryEnumerator *fileEnumerator = [fileMgr enumeratorAtURL:url includingPropertiesForKeys:resourceKeys options:NSDirectoryEnumerationSkipsHiddenFiles errorHandler:nil];
+    NSUInteger currentSize = 0;
+    for (NSURL * fileURL in fileEnumerator) {
+         NSDictionary * attr = [fileURL resourceValuesForKeys:resourceKeys error:nil];
+        NSNumber *totalAllocatedSize = attr[NSURLTotalFileAllocatedSizeKey];
+        currentSize += [totalAllocatedSize unsignedIntegerValue];
+    }
+    return currentSize;
 }
 
 #pragma mark --- 归档 ---
@@ -264,7 +369,7 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
     [aCoder encodeDouble:self.expiredInterval forKey:@"expiredInterval"];
     [aCoder encodeObject:self.createTime forKey:@"createTime"];
     [aCoder encodeInteger:self.appVersion forKey:@"appVersion"];
-    [aCoder encodeObject:self.cachePath forKey:@"cachePath"];
+    [aCoder encodeObject:self.md5Key forKey:@"md5Key"];
     [aCoder encodeObject:self.cacheType forKey:@"cacheType"];
 }
 
@@ -276,10 +381,11 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
     self.expiredInterval = [[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"expiredInterval"] doubleValue];
     self.createTime = [aDecoder decodeObjectOfClass:[NSDate class] forKey:@"createTime"];
     self.appVersion = [[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"appVersion"] integerValue];
-    self.cachePath = [aDecoder decodeObjectOfClass:[NSString class] forKey:@"cachePath"];
+    self.md5Key = [aDecoder decodeObjectOfClass:[NSString class] forKey:@"md5Key"];
     self.cacheType = [aDecoder decodeObjectOfClass:[NSString class] forKey:@"cacheType"];
-    if (self.cachePath.length && self.cacheType.length) {
-        NSData * data = [NSData dataWithContentsOfFile:self.cachePath];
+    NSString * cachePath = cacheFilePathWithKey(self.md5Key);
+    if (cachePath.length && self.cacheType.length) {
+        NSData * data = [NSData dataWithContentsOfFile:cachePath];
         self.cachedResponse = objectFromDataWithType(self.cacheType, data);
     }
     return self;
@@ -291,7 +397,9 @@ NS_INLINE NSString * savePathWithKey(NSString * key) {
     NSString * cache = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
     NSString * path = [cache stringByAppendingPathComponent:@"DWFlashFlow"];
     path = [path stringByAppendingPathComponent:@"ResponseCache"];
-    path = [path stringByAppendingPathComponent:key];
+    if (key.length) {
+        path = [path stringByAppendingPathComponent:key];
+    }
     if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
     }
@@ -310,5 +418,34 @@ NS_INLINE void writeFile2Path(id file,NSString * path) {
     NSData * data = dataFromCachedResponse(file);
     [data writeToFile:path atomically:YES];
 }
+
+NS_INLINE NSString * MD5(NSString * str){
+    CC_MD5_CTX md5;
+    CC_MD5_Init (&md5);
+    CC_MD5_Update (&md5, [str UTF8String], (CC_LONG)[str length]);
+    
+    unsigned char digest[CC_MD5_DIGEST_LENGTH];
+    CC_MD5_Final (digest, &md5);
+    return  [NSString stringWithFormat: @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+             digest[0],  digest[1],
+             digest[2],  digest[3],
+             digest[4],  digest[5],
+             digest[6],  digest[7],
+             digest[8],  digest[9],
+             digest[10], digest[11],
+             digest[12], digest[13],
+             digest[14], digest[15]];
+};
+
+#pragma mark --- override ---
+-(instancetype)init {
+    if (self = [super init]) {
+        _ioQueue = dispatch_queue_create("com.handleLocalCacheQueue", DISPATCH_QUEUE_SERIAL);
+        _maxExpireInterval = -1;
+        _maxCacheSize = 0;
+    }
+    return self;
+}
+
 
 @end
