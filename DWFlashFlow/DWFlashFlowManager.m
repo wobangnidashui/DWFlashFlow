@@ -586,4 +586,11 @@ static void enumerateRequest(DWFlashFlowManager * m,void(^enumerator)(NSString *
     return _requestContainer;
 }
 
+-(id<DWFlashFlowCacheProtocol>)cacheHandler {
+    if (!_cacheHandler) {
+        _cacheHandler = [dwflashflow]
+    }
+    return _cacheHandler;
+}
+
 @end

@@ -17,6 +17,7 @@
 #import <Foundation/Foundation.h>
 #import "DWFlashFlowAbstractRequest.h"
 #import "DWFlashFlowBaseLinker.h"
+#import "DWFlashFlowCache.h"
 
 @protocol DWFlashFlowEncryptProtocol
 
@@ -52,6 +53,10 @@
 //Encryptor for request.
 ///加密器
 @property (nonatomic ,strong) id<DWFlashFlowEncryptProtocol> encryptor;
+
+//An instance follows DWFlashFlowCacheProtocol who handle response cache.
+///遵循DWFlashFlowCacheProtocol协议的处理响应缓存的实例
+@property (nonatomic ,strong) id<DWFlashFlowCacheProtocol> cacheHandler;
 
 //Singleton method.
 ///实例化方法
