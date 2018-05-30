@@ -84,6 +84,9 @@
 
 #define isKindofClass(A) ([request isKindOfClass:[A class]])
 
+NSString * const responseCacheErrorDomain = @"com.DWFlashFlow.error.responseCache";
+const NSInteger CacheOnlyButNoCache = 10001;
+
 static DWFlashFlowManager * mgr = nil;
 
 @interface DWFlashFlowManager ()
@@ -218,6 +221,34 @@ static DWFlashFlowManager * mgr = nil;
     configRequestWithConfig(r,config);
 }
 
+///考虑是否存储缓存的请求结束动作，此处包括请求状态的配置请求状态、缓存响应数据、回调成功动作
+-(void)requestCompleteActionWithRequest:(DWFlashFlowRequest *)r success:(BOOL)success response:(id)response error:(NSError *)error cacheResponse:(BOOL)cacheResponse needRequestThen:(BOOL)needRequestThen completion:(RequestCompletion)completion {
+    
+    ///如果不是先行回调继续请求的话则将请求状态置为完成（即请求确实已经完成）
+    if (!needRequestThen) {
+        ///改变请求状态
+        if (r.status != DWFlashFlowRequestCanceled) {
+            configRequestWithStatus(r, DWFlashFlowRequestFinish);
+        }
+    }
+    ///如果考虑缓存则此处缓存数据(当且仅当是普通请求且请求成功且数据不为空且需要缓存时才缓存)
+    if (cacheResponse && success && response && r.requestType == DWFlashFlowRequestTypeNormal) {
+        ///如果当前缓存策略需要缓存则异步缓存
+        NSArray * savePolicy = @[@(DWFlashFlowCachePolicyLoadOnlyAndSave),
+                                 @(DWFlashFlowCachePolicyLocalThenLoad),
+                                 @(DWFlashFlowCachePolicyLocalElseLoad),
+                                 @(DWFlashFlowCachePolicyLocalOnly)];
+        if ([savePolicy containsObject:@(r.cachePolicy)]) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                [self.cacheHandler storeCachedResponse:response forKey:r.configuration.actualURL request:r];
+            });
+        }
+    }
+    ///处理响应数据并回调
+    [self requestCompleteActionWithRequest:r success:success response:response error:error completion:completion];
+}
+
+///回调成功动作，此处包括数据的处理（解密、二次处理、配置请求，执行回调）
 -(void)requestCompleteActionWithRequest:(DWFlashFlowRequest *)r success:(BOOL)success response:(id)response error:(NSError *)error completion:(RequestCompletion)completion {
     
     ///解密数据
@@ -288,25 +319,74 @@ static DWFlashFlowManager * mgr = nil;
                 [self performSelector:@selector(afterFire:) withObject:tempB afterDelay:r.retryDelayInterval];
             }
         } else {///不进入重试逻辑则直接完成任务
-            if (r.status != DWFlashFlowRequestCanceled) {
-                configRequestWithStatus(r, DWFlashFlowRequestFinish);
-            }
-            [self requestCompleteActionWithRequest:r success:success response:response error:error completion:completion];
+            ///此处回调则考虑缓存数据，且请求完成，无需继续请求
+            [self requestCompleteActionWithRequest:r success:success response:response error:error cacheResponse:YES needRequestThen:NO completion:completion];
         }
     };
     
     ///根据任务是否为断点下载分配linker调用API
     if (request.status == DWFlashFlowRequestCanceled && request.resumeData) {
         [self.linker sendResumeDataRequest:request progress:progress completion:ab];
-        
     } else {
-        [self.linker sendRequest:request progress:progress completion:ab];
+        ///此处为准备工作完成，可以根据缓存策略决定是否发送请求
+        [self sendNormalRequestConsiderCachePolicy:request progress:progress requestCompletion:completion retryCompletion:ab];
     }
     ///配置request为执行状态
     configRequestWithStatus(request, DWFlashFlowRequestExcuting);
     ///标志完成任务
     if (!request.finishAfterComplete) {
         [request finishOperation];
+    }
+}
+
+
+/**
+ 根据缓存策略决定发送动作
+
+ @param request 请求实例
+ @param progress 过程回调
+ @param requestCompletion 请求完成回调
+ @param retryCompletion 添加重试机制的完成回调
+ */
+-(void)sendNormalRequestConsiderCachePolicy:(DWFlashFlowRequest *)request progress:(ProgressCallback)progress requestCompletion:(RequestCompletion)requestCompletion retryCompletion:(Completion)retryCompletion {
+    ///此处为准备工作完成，可以根据缓存策略决定是否发送请求（当且仅当是普通请求且需要加载本地缓存时才读本地缓存）
+    NSArray * localPolicy = @[@(DWFlashFlowCachePolicyLocalThenLoad),@(DWFlashFlowCachePolicyLocalElseLoad),@(DWFlashFlowCachePolicyLocalOnly)];
+    if (request.requestType == DWFlashFlowRequestTypeNormal && [localPolicy containsObject:@(request.cachePolicy)]) {
+        ///存在加载本地缓存需求
+        ///先取出缓存数据
+        id response = [self.cacheHandler cachedResponseForKey:request.configuration.actualURL];
+        
+        if (!response) {
+            ///如果缓存数据为空，按缓存策略执行动作
+            if (request.cachePolicy == DWFlashFlowCachePolicyLocalOnly) {
+                ///如果为只读本地模式且本地则直接回调失败，不走重试逻辑，直接以不考虑缓存模式调用完成方法
+                if (requestCompletion) {
+                    [self requestCompleteActionWithRequest:request success:NO response:nil error:[NSError errorWithDomain:responseCacheErrorDomain code:CacheOnlyButNoCache userInfo:@{@"errMsg":@"Cache policy is DWFlashFlowCachePolicyLocalOnly but there's no cache found"}] cacheResponse:NO needRequestThen:NO completion:requestCompletion];
+                }
+            } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalElseLoad) {
+                ///如果为优先本地模式，则请求远端
+                [self.linker sendRequest:request progress:progress completion:retryCompletion];
+            } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalThenLoad) {
+                ///如果为本地远程均需模式，由于本地未命中缓存，所以直接请求远端
+                [self.linker sendRequest:request progress:progress completion:retryCompletion];
+            }
+        } else {
+            ///命中缓存，先调用请求结束动作（不考虑存储缓存），再根据缓存策略决定后续动作
+            if (request.cachePolicy == DWFlashFlowCachePolicyLocalOnly) {
+                ///如果为只读本地模式则无后续操作，请求结束动作（不继续请求）
+                [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:NO  completion:requestCompletion];
+            } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalElseLoad) {
+                ///如果为优先本地模式，调用请求结束动作（不继续请求）
+                [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:NO  completion:requestCompletion];
+            } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalThenLoad) {
+                ///如果为本地远程均需模式，先调用请求结束动作（继续请求），请求远端
+                [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:YES  completion:requestCompletion];
+                [self.linker sendRequest:request progress:progress completion:retryCompletion];
+            }
+        }
+    } else {
+        ///如果缓存策略中无需取本地缓存则直接请求
+        [self.linker sendRequest:request progress:progress completion:retryCompletion];
     }
 }
 
@@ -590,7 +670,7 @@ static void enumerateRequest(DWFlashFlowManager * m,void(^enumerator)(NSString *
 
 -(id<DWFlashFlowCacheProtocol>)cacheHandler {
     if (!_cacheHandler) {
-        _cacheHandler = [DWFlashFlowAdvancedCache new];
+        _cacheHandler = [DWFlashFlowAdvancedCache cacheHandler];
     }
     return _cacheHandler;
 }

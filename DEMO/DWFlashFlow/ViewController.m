@@ -22,6 +22,7 @@
 //    [self addRequestDependency];
 //    [self batchRequest];
 //    [self requestChain];
+    
     [self requestCache];
 }
 
@@ -38,11 +39,11 @@
     DWFlashFlowRequest * r = [DWFlashFlowRequest new];
     r.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
-        DWFlashFlowAdvancedCache * c = [DWFlashFlowAdvancedCache new];
+        DWFlashFlowAdvancedCache * c = [DWFlashFlowAdvancedCache cacheHandler];
         DWFlashFlowRequest * r = request;
         [c storeCachedResponse:response forKey:r.configuration.actualURL request:r];
-//        NSDictionary * t = [c cachedResponseForKey:((DWFlashFlowRequest *)request).configuration.actualURL];
-//        NSLog(@"%@",t );
+        NSDictionary * t = [c cachedResponseForKey:r.configuration.actualURL];
+        NSLog(@"%@",t );
     };
     [r start];
 //    DWFlashFlowAdvancedCache * cc = [DWFlashFlowAdvancedCache new];
