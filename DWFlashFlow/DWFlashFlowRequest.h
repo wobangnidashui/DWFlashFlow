@@ -177,8 +177,8 @@ typedef id(^ProcessorBlock)(DWFlashFlowRequest * request,id data);
 ///request对象经过全局参数组合过得实际参数
 @property (nonatomic ,strong ,readonly) DWFlashFlowRequestConfig * configuration;
 
-//Cache policy for request.
-///响应数据缓存缓存策略
+//Cache policy for request,DWFlashFlowCachePolicyLoadOnly by default.
+///响应数据缓存缓存策略，默认为DWFlashFlowCachePolicyLoadOnly模式。
 @property (nonatomic ,assign) DWFlashFlowCachePolicy cachePolicy;
 
 //Expired time interval for response cache.

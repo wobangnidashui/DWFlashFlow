@@ -61,6 +61,7 @@
         _requestType = DWFlashFlowRequestTypeNormal;
         _requestSerializerType = DWFlashFlowRequestSerializerTypeJSON;
         _responseSerializerType = DWFlashFlowResponseSerializerTypeJSON;
+        _cachePolicy = DWFlashFlowCachePolicyLoadOnly;
         _expiredInterval = 0;
     }
     return self;
@@ -97,6 +98,7 @@
     r.downloadSavePath = self.downloadSavePath;
     configRequestWithResumeData(r, [self.resumeData copy]);
     r.files = [self.files copy];
+    r.cachePolicy = self.cachePolicy;
     r.expiredInterval = self.expiredInterval;
     return r;
 }
