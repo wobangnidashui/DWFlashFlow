@@ -113,21 +113,8 @@ NS_INLINE id objectFromDataWithType(NSString * type,NSData * data) {
     return nil;
 }
 
-NS_INLINE NSString * URLForKey(NSString * key) {
-    return key;
-}
-
-NS_INLINE NSURLRequest * requestForKey(NSString * key) {
-    if (!key.length) {
-        return nil;
-    }
-    return [NSURLRequest requestWithURL:[NSURL URLWithString:URLForKey(key)]];
-}
-
 const NSString * kCacheType = @"cacheType";
-const NSString * kAppVersion = @"appVersion";
-const NSString * kCreateTime = @"createTime";
-const NSString * kExpiredInterval = @"expiredInterval";
+
 
 
 @implementation DWFlashFlowDefaultCache
@@ -185,9 +172,23 @@ const NSString * kExpiredInterval = @"expiredInterval";
     return NO;
 }
 
+#pragma mark --- tool func ---
+NS_INLINE NSString * URLForKey(NSString * key) {
+    return key;
+}
+
+NS_INLINE NSURLRequest * requestForKey(NSString * key) {
+    if (!key.length) {
+        return nil;
+    }
+    return [NSURLRequest requestWithURL:[NSURL URLWithString:URLForKey(key)]];
+}
+
 @end
 
-@interface DWFlashFlowLocalCache ()<NSSecureCoding>
+
+
+@interface DWFlashFlowAdvancedCache ()<NSSecureCoding>
 
 @property (nonatomic ,strong) id cachedResponse;
 
@@ -203,20 +204,25 @@ const NSString * kExpiredInterval = @"expiredInterval";
 
 @property (nonatomic ,assign) NSTimeInterval maxExpireInterval;
 
-@property (nonatomic ,assign) unsigned long long maxCacheSize;
+@property (nonatomic ,assign) unsigned long long maxMemorySize;
+
+@property (nonatomic ,assign) unsigned long long maxDiskSize;
 
 @property (nonatomic ,strong) dispatch_queue_t ioQueue;
 
+@property (nonatomic ,strong) NSCache * memoryCache;
+
 @end
 
-@implementation DWFlashFlowLocalCache
+@implementation DWFlashFlowAdvancedCache
 
-+(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxCacheSize:(unsigned long long)cacheSize {
-    __kindof DWFlashFlowLocalCache * handler = [self dw_new];
++(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(unsigned long long)memorySize maxDiskSize:(unsigned long long)diskSize {
+    __kindof DWFlashFlowAdvancedCache * handler = [self dw_new];
     if (handler) {
         handler.ioQueue = dispatch_queue_create("com.handleLocalCacheQueue", DISPATCH_QUEUE_SERIAL);
         handler.maxExpireInterval = expireInterval;
-        handler.maxCacheSize = cacheSize;
+        handler.maxMemorySize = memorySize;
+        handler.maxDiskSize = diskSize;
         [[NSNotificationCenter defaultCenter] addObserver:handler
                                                  selector:@selector(cleanLoalDiskCacheWithCompletion:)
                                                      name:UIApplicationWillTerminateNotification
@@ -231,7 +237,7 @@ const NSString * kExpiredInterval = @"expiredInterval";
 }
 
 +(instancetype)cacheHandler {
-    return [self cacheHandlerWithMaxExpireInterval:(60 * 60 * 24 * 7) maxCacheSize:(1024 * 1024 * 100)];
+    return [self cacheHandlerWithMaxExpireInterval:(60 * 60 * 24 * 7) maxMemorySize:(1024 * 1024 * 2) maxDiskSize:(1024 * 1024 * 100)];
 }
 
 -(void)storeCachedResponse:(id)cachedResponse forKey:(NSString *)key request:(DWFlashFlowRequest *)request {
@@ -246,14 +252,15 @@ const NSString * kExpiredInterval = @"expiredInterval";
     if (expiredInterval == 0) {
         expiredInterval = [DWFlashFlowManager manager].globalExpiredInterval;
     }
-
-    DWFlashFlowLocalCache * cache = [DWFlashFlowLocalCache dw_new];
+    
+    DWFlashFlowAdvancedCache * cache = [DWFlashFlowAdvancedCache dw_new];
     cache.cachedResponse = cachedResponse;
     cache.md5Key = md5Key;
     cache.cacheType = cacheType(cachedResponse);
     cache.appVersion = [DWFlashFlowManager manager].appVersion;
     cache.createTime = [NSDate date];
     cache.expiredInterval = expiredInterval;
+    [self.memoryCache setObject:cache forKey:md5Key];
     dispatch_async(self.ioQueue, ^{
         [NSKeyedArchiver archiveRootObject:cache toFile:metaPathWithKey(md5Key)];
         writeFile2Path(cachedResponse, cacheFilePathWithKey(md5Key));
@@ -262,7 +269,15 @@ const NSString * kExpiredInterval = @"expiredInterval";
 
 -(id)cachedResponseForKey:(NSString *)key {
     NSString * md5Key = MD5(key);
-    DWFlashFlowLocalCache * cache = [NSKeyedUnarchiver unarchiveObjectWithFile:metaPathWithKey(md5Key)];
+    ///先从内存缓存取
+    DWFlashFlowAdvancedCache * cache = [self.memoryCache objectForKey:md5Key];
+    if (!cache) {
+        ///再从磁盘缓存取
+        cache = [NSKeyedUnarchiver unarchiveObjectWithFile:metaPathWithKey(md5Key)];
+        if (cache) {
+            [self.memoryCache setObject:cache forKey:md5Key];
+        }
+    }
     if (![self validateCacheResponese:cache forKey:key]) {
         return nil;
     }
@@ -278,7 +293,7 @@ const NSString * kExpiredInterval = @"expiredInterval";
     }
 }
 
--(BOOL)validateCacheResponese:(DWFlashFlowLocalCache *)cachedResponse forKey:(NSString *)key {
+-(BOOL)validateCacheResponese:(DWFlashFlowAdvancedCache *)cachedResponse forKey:(NSString *)key {
     
     BOOL res = YES;
     
@@ -370,8 +385,8 @@ const NSString * kExpiredInterval = @"expiredInterval";
         }
         
         ///如果设置了最大缓存大小则删除一部分老的缓存
-        if (self.maxCacheSize > 0 && currentSize > self.maxCacheSize) {
-            const NSUInteger desiredCacheSize = self.maxCacheSize / 2;
+        if (self.maxDiskSize > 0 && currentSize > self.maxDiskSize) {
+            const NSUInteger desiredCacheSize = self.maxDiskSize / 2;
             ///按最后修改时间排序
             NSArray *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent
                                                             usingComparator:^NSComparisonResult(id obj1, id obj2) {
@@ -496,133 +511,14 @@ NS_INLINE NSString * MD5(NSString * str){
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-@end
-
-@interface DWFlashFlowAdvancedCache ()
-
-@property (nonatomic ,strong) NSURLCache * shareCacher;
-
-@property (nonatomic ,assign) NSTimeInterval expireInterval;
-
-@end
-
-@implementation DWFlashFlowAdvancedCache
-
-+(instancetype)cacheHandler {
-    return [self cacheHandlerWithMaxExpireInterval:(60 * 60 * 24 * 7) maxMemorySize:(1024 * 1024 * 2) maxDiskSize:(1024 * 1024 * 100)];
+#pragma mark --- setter/getter ---
+-(NSCache *)memoryCache {
+    if (!_memoryCache) {
+        _memoryCache = [[NSCache alloc] init];
+        _memoryCache.totalCostLimit = self.maxMemorySize;
+        _memoryCache.countLimit = 50;
+    }
+    return _memoryCache;
 }
 
-+(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(unsigned long long)memorySize maxDiskSize:(unsigned long long)diskSize {
-    __kindof DWFlashFlowAdvancedCache * handler = [self dw_new];
-    if (handler) {
-        handler.shareCacher = [[NSURLCache alloc] initWithMemoryCapacity:memorySize diskCapacity:diskSize diskPath:nil];
-        handler.expireInterval = expireInterval;
-    }
-    return handler;
-}
-
--(void)storeCachedResponse:(id)cachedResponse forKey:(NSString *)key request:(DWFlashFlowRequest *)request {
-    if (!cachedResponse || !key.length || !request || !request.task.response) {
-        return;
-    }
-    if (!validateCachedResponseType(cachedResponse)) {
-        return;
-    }
-    NSData * data = dataFromCachedResponse(cachedResponse);
-    if (!data) {
-        return;
-    }
-    NSMutableDictionary * userInfo = [NSMutableDictionary dictionaryWithCapacity:0];
-    NSString * type = cacheType(cachedResponse);
-    
-    if (!type.length) {
-        return;
-    }
-    NSTimeInterval expiredInterval = request.expiredInterval;
-    if (expiredInterval == 0) {
-        expiredInterval = [DWFlashFlowManager manager].globalExpiredInterval;
-    }
-    userInfo[kCacheType] = type;
-    userInfo[kAppVersion] = @([DWFlashFlowManager manager].appVersion);
-    userInfo[kCreateTime] = [NSDate date];
-    userInfo[kExpiredInterval] = @(expiredInterval);
-    NSCachedURLResponse * response = [[NSCachedURLResponse alloc] initWithResponse:request.task.response data:data userInfo:userInfo storagePolicy:(NSURLCacheStorageAllowed)];
-    [self.shareCacher storeCachedResponse:response forRequest:requestForKey(key)];
-}
-
--(id)cachedResponseForKey:(NSString *)key {
-    if (!key.length) {
-        return nil;
-    }
-    NSCachedURLResponse * response = [self.shareCacher cachedResponseForRequest:requestForKey(key)];
-    if (![self validateCacheResponese:response forKey:key]) {
-        return nil;
-    }
-    NSString * cacheType = response.userInfo[kCacheType];
-    NSData * data = response.data;
-    return objectFromDataWithType(cacheType, data);
-}
-
--(void)removeCachedResponseForKey:(NSString *)key {
-    if (!key.length) {
-        return ;
-    }
-    [self.shareCacher removeCachedResponseForRequest:requestForKey(key)];
-}
-
--(BOOL)validateCacheResponese:(NSCachedURLResponse *)cachedResponse forKey:(NSString *)key {
-    BOOL res = YES;
-    if (res && !cachedResponse) {
-        res = NO;
-    }
-    if (res && ![cachedResponse isKindOfClass:[NSCachedURLResponse class]]) {
-        res = NO;
-    }
-    if (res && !cachedResponse.data) {
-        res = NO;
-    }
-    if (res && !cachedResponse.userInfo) {
-        res = NO;
-    }
-    
-    ///检验版本
-    NSInteger appVersion = [cachedResponse.userInfo[kAppVersion] integerValue];
-    if (res && appVersion < [DWFlashFlowManager manager].appVersion) {
-        res = NO;
-    }
-    
-    ///检验超时
-    NSDate * createTime = cachedResponse.userInfo[kCreateTime];
-    NSTimeInterval expireTime = [cachedResponse.userInfo[kExpiredInterval] doubleValue];
-    BOOL validateTime = createTime && (expireTime != 0 || self.expireInterval != 0);
-    ///不全为0
-    if (validateTime) {
-        ///如果本身为0则校验最大时长
-        if (expireTime == 0) {
-            expireTime = self.expireInterval;
-        } else if (self.expireInterval != 0) {///本身不为0时若最大时长也不为0，则校验两者间较小值，否则校验本身值
-            expireTime = MIN(expireTime, self.expireInterval);
-        }
-    }
-    if (res && validateTime && ([[NSDate date] timeIntervalSince1970] - [createTime timeIntervalSince1970] > expireTime)) {
-        res = NO;
-    }
-    
-    ///数据不合法
-    NSString * cacheType = cachedResponse.userInfo[kCacheType];
-    if (res && !objectFromDataWithType(cacheType, cachedResponse.data)) {
-        res = NO;
-    }
-    
-    ///缓存无效后删除
-    if (!res) {
-        [self removeCachedResponseForKey:key];
-    }
-    return res;
-}
-
-#pragma mark --- override ---
-+(instancetype)dw_new {
-    return [super new];
-}
 @end

@@ -22,7 +22,6 @@
 //    [self addRequestDependency];
 //    [self batchRequest];
 //    [self requestChain];
-    
     [self requestCache];
 }
 
@@ -37,20 +36,16 @@
 
 -(void)requestCache {
     DWFlashFlowRequest * r = [DWFlashFlowRequest new];
+    r.cachePolicy = DWFlashFlowCachePolicyLocalElseLoad;
     r.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
-        DWFlashFlowAdvancedCache * c = [DWFlashFlowAdvancedCache cacheHandler];
-        DWFlashFlowRequest * r = request;
-        [c storeCachedResponse:response forKey:r.configuration.actualURL request:r];
-        NSDictionary * t = [c cachedResponseForKey:r.configuration.actualURL];
-        NSLog(@"%@",t );
+        NSLog(@"%@",response);
     };
     [r start];
-//    DWFlashFlowAdvancedCache * cc = [DWFlashFlowAdvancedCache new];
-//    cc.maxCacheSize = 10000;
-//    [cc cleanLoalDiskCacheWithCompletion:^{
-//
-//    }];
+}
+
+-(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self requestCache];
 }
 
 -(void)addRequestDependency {

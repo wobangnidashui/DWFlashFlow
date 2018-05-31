@@ -26,11 +26,14 @@
 ///移除指定key的响应
 -(void)removeCachedResponseForKey:(NSString *)key;
 
+@optional
 //Validate response cache by key.
 ///检验指定key的响应的有效性（内部调用，不对外部暴露）
 -(BOOL)validateCacheResponese:(id)cachedResponse forKey:(NSString *)key;
 
 @end
+
+
 
 //Cache response via NSURLCache.
 ///以NSURLCache作缓存，此类中Key必须为请求URL。（仅为简单缓存，不会控制版本号及超时时间）
@@ -38,9 +41,11 @@
 
 @end
 
+
+
 //Control expired time and AppVersion in Local cache.
-///可以控制版本超时时间的本地缓存策略，此类中key可以为任意key，内部文件会做MD5加密处理，应保证key的唯一性。
-@interface DWFlashFlowLocalCache : NSObject<DWFlashFlowCacheProtocol>
+///可以控制版本超时时间的缓存策略，此类中key可以为任意key，内部文件会做MD5加密处理，应保证key的唯一性。
+@interface DWFlashFlowAdvancedCache : NSObject<DWFlashFlowCacheProtocol>
 
 //Auto clean expired cache and remove superfluous cache until totalsize is 50% of maxCacheSize.
 ///自动清理过期文件并删除冗余文件至大小占最大限制的1/2。
@@ -55,40 +60,14 @@
  初始化方法
 
  @param expireInterval 最大超时时长
- @param cacheSize 最大磁盘缓存空间(单位B,即1KB为1024)
+ @param memorySize 最大内存缓存空间(单位B,即1KB为1024)
+ @param diskSize 最大磁盘缓存空间(单位B,即1KB为1024)
  @return 实例
- */
-+(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxCacheSize:(unsigned long long)cacheSize;
-
-//Initialize with default value.ExpireInterval is seconds in one week,diskSize is 100MB.
-///以默认值初始化，其中超时时间为1周，磁盘缓存为100MB。
-+(instancetype)cacheHandler;
-
-@end
-
-//Cache response via NSURLCache.(Can also control expired time and AppVersion in Local cache.)
-///通过NSURLCache进行内存及磁盘缓存，可以控制最大超时时间、缓存超时时间、版本号。具有自动清理磁盘缓存功能。
-@interface DWFlashFlowAdvancedCache : NSObject<DWFlashFlowCacheProtocol>
-
-+(instancetype)new NS_UNAVAILABLE;
-
--(instancetype)init NS_UNAVAILABLE;
-
-/**
- Specific initialize method.
- 初始化方法
-
- @param expireInterval 超时时间
- @param memorySize 内存缓存限制
- @param diskSize 磁盘缓存限制
- @return 实例
- 
- @disc expireInterval若为0则无最大超时时长
  */
 +(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(unsigned long long)memorySize maxDiskSize:(unsigned long long)diskSize;
 
 //Initialize with default value.ExpireInterval is seconds in one week,memorySize is 2MB,diskSize is 100MB.
-///以默认值初始化，其中超时时间为1周，内存缓存限制为2MB，磁盘缓存为100MB。
+///以默认值初始化，其中超时时间为1周，内存缓存为2MB，磁盘缓存为100MB。
 +(instancetype)cacheHandler;
 
 @end

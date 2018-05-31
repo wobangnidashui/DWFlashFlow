@@ -231,8 +231,8 @@ static DWFlashFlowManager * mgr = nil;
             configRequestWithStatus(r, DWFlashFlowRequestFinish);
         }
     }
-    ///如果考虑缓存则此处缓存数据(当且仅当是普通请求且请求成功且数据不为空且需要缓存时才缓存)
-    if (cacheResponse && success && response && r.requestType == DWFlashFlowRequestTypeNormal) {
+    ///如果考虑缓存则此处缓存数据(当且仅当是普通请求且请求完成且请求成功且数据不为空且需要缓存时才缓存)
+    if (cacheResponse && success && r.status == DWFlashFlowRequestFinish && response && r.requestType == DWFlashFlowRequestTypeNormal) {
         ///如果当前缓存策略需要缓存则异步缓存
         NSArray * savePolicy = @[@(DWFlashFlowCachePolicyLoadOnlyAndSave),
                                  @(DWFlashFlowCachePolicyLocalThenLoad),
@@ -245,11 +245,11 @@ static DWFlashFlowManager * mgr = nil;
         }
     }
     ///处理响应数据并回调
-    [self requestCompleteActionWithRequest:r success:success response:response error:error completion:completion];
+    [self requestCompleteActionWithRequest:r success:success response:response error:error needRequestThen:needRequestThen completion:completion];
 }
 
 ///回调成功动作，此处包括数据的处理（解密、二次处理、配置请求，执行回调）
--(void)requestCompleteActionWithRequest:(DWFlashFlowRequest *)r success:(BOOL)success response:(id)response error:(NSError *)error completion:(RequestCompletion)completion {
+-(void)requestCompleteActionWithRequest:(DWFlashFlowRequest *)r success:(BOOL)success response:(id)response error:(NSError *)error needRequestThen:(BOOL)needRequestThen completion:(RequestCompletion)completion {
     
     ///解密数据
     if (self.encryptor && r.needEncrypt) {
@@ -276,14 +276,21 @@ static DWFlashFlowManager * mgr = nil;
         __weak typeof(r)weakR = r;
         completion(success,response,error,weakR);
     }
+    ///还需继续请求，不做实际结束回调
+    if (!needRequestThen) {
+        [self requestFinishAction:r];
+    }
+}
+
+-(void)requestFinishAction:(DWFlashFlowRequest *)request {
     ///标志完成任务
-    if (r.finishAfterComplete) {
-        [r finishOperation];
+    if (request.finishAfterComplete) {
+        [request finishOperation];
     }
     ///清除实际请求配置
-    configRequestWithConfig(r, nil);
+    configRequestWithConfig(request, nil);
     ///释放引用
-    [self removeRequestWithKey:r.requestID];
+    [self removeRequestWithKey:request.requestID];
 }
 
 #pragma mark --- tool method - 发送 ---
@@ -310,7 +317,7 @@ static DWFlashFlowManager * mgr = nil;
         DWFlashFlowRequest * r = [self requestForKey:key];
         if (r.retryCount > 0 && !success) {///如果有重试次数且为失败状态进入重试逻辑
             if (r.status == DWFlashFlowRequestCanceled) {///如果为取消状态则直接完成任务，不进行重试
-                [self requestCompleteActionWithRequest:r success:success response:response error:error completion:completion];
+                [self requestCompleteActionWithRequest:r success:success response:response error:error cacheResponse:NO needRequestThen:NO completion:completion];
             } else {///否则延时重试
                 r.retryCount --;
                 dispatch_block_t tempB = ^(){
@@ -377,7 +384,7 @@ static DWFlashFlowManager * mgr = nil;
                 [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:NO  completion:requestCompletion];
             } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalElseLoad) {
                 ///如果为优先本地模式，调用请求结束动作（不继续请求）
-                [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:NO  completion:requestCompletion];
+                [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:NO completion:requestCompletion];
             } else if (request.cachePolicy == DWFlashFlowCachePolicyLocalThenLoad) {
                 ///如果为本地远程均需模式，先调用请求结束动作（继续请求），请求远端
                 [self requestCompleteActionWithRequest:request success:YES response:response error:nil cacheResponse:NO needRequestThen:YES  completion:requestCompletion];
