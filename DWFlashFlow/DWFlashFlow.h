@@ -20,6 +20,9 @@
  提供核心请求组件更换接口
  提供全局配置管理类
  
+ version 1.0.1
+ 添加缓存机制，修复请求链中cancelOnFailure初始值赋值错误问题
+ 
  */
 
 #ifndef DWFlashFlow_h

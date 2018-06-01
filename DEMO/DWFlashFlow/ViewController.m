@@ -75,6 +75,7 @@
 
 -(void)batchRequest {
     DWFlashFlowRequest * r1 = [DWFlashFlowRequest new];
+    r1.cachePolicy = DWFlashFlowCachePolicyLocalOnly;
     r1.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");
@@ -96,6 +97,7 @@
 
 -(void)requestChain {
     DWFlashFlowRequest * r1 = [DWFlashFlowRequest new];
+    r1.cachePolicy = DWFlashFlowCachePolicyLocalOnly;
     r1.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");

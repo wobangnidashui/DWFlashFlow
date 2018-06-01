@@ -13,7 +13,7 @@
 @implementation DWFlashFlowChainRequest
 
 -(instancetype)initWithRequests:(NSArray<__kindof DWFlashFlowAbstractRequest *> *)requests {
-    if (self = [super init]) {
+    if (self = [self init]) {
         _requests = requests;
     }
     return self;

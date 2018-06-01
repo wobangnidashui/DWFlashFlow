@@ -405,7 +405,9 @@ static DWFlashFlowManager * mgr = nil;
         NSMutableDictionary * temp = @{}.mutableCopy;
         
         [weakR.requests enumerateObjectsUsingBlock:^(__kindof DWFlashFlowAbstractRequest * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [temp setValue:obj.response forKey:obj.requestID];
+            if (obj.response && obj.requestID.length) {
+                [temp setValue:obj.response forKey:obj.requestID];
+            }
         }];
         ///赋值响应数据
         configRequestWithResponse(request, temp);
@@ -459,7 +461,9 @@ static DWFlashFlowManager * mgr = nil;
         NSMutableDictionary * temp = @{}.mutableCopy;
         
         [weakR.requests enumerateObjectsUsingBlock:^(__kindof DWFlashFlowAbstractRequest * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [temp setValue:obj.response forKey:obj.requestID];
+            if (obj.response && obj.requestID.length) {
+                [temp setValue:obj.response forKey:obj.requestID];
+            }
         }];
         ///赋值响应数据
         configRequestWithResponse(request, temp);
