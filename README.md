@@ -17,12 +17,14 @@ It uses AFN as request core, benefits from separation design of functional layer
 - 全局参数
 - 批量请求与请求链
 - 请求加密
+- 请求缓存策略
 
 ## Func
 - Combine with NSOperation
 - Global parameter
-- Batch request and request chain.
+- Batch request and request chain
 - Request encryption
+- Request cache policy
 
 ## 如何使用
 首先，你应该将所需文件拖入工程中，或者你也可以用Cocoapods去集成他。
