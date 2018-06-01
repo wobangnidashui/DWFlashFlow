@@ -13,8 +13,9 @@
 @implementation DWFlashFlowChainRequest
 
 -(instancetype)initWithRequests:(NSArray<__kindof DWFlashFlowAbstractRequest *> *)requests {
-    if (self = [self init]) {
+    if (self = [super init]) {
         _requests = requests;
+        _cancelOnFailure = YES;
     }
     return self;
 }
@@ -43,12 +44,6 @@ static inline void configRequestWithResponse(DWFlashFlowAbstractRequest * r,id r
 }
 
 #pragma mark --- override ---
--(instancetype)init {
-    if (self = [super init]) {
-        _cancelOnFailure = YES;
-    }
-    return self;
-}
 
 -(void)start {
     [super start];
