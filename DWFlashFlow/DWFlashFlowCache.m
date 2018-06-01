@@ -204,9 +204,9 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
 
 @property (nonatomic ,assign) NSTimeInterval maxExpireInterval;
 
-@property (nonatomic ,assign) unsigned long long maxMemorySize;
+@property (nonatomic ,assign) NSUInteger maxMemorySize;
 
-@property (nonatomic ,assign) unsigned long long maxDiskSize;
+@property (nonatomic ,assign) NSUInteger maxDiskSize;
 
 @property (nonatomic ,strong) dispatch_queue_t ioQueue;
 
@@ -216,7 +216,7 @@ NS_INLINE NSURLRequest * requestForKey(NSString * key) {
 
 @implementation DWFlashFlowAdvancedCache
 
-+(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(unsigned long long)memorySize maxDiskSize:(unsigned long long)diskSize {
++(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(NSUInteger)memorySize maxDiskSize:(NSUInteger)diskSize {
     __kindof DWFlashFlowAdvancedCache * handler = [self dw_new];
     if (handler) {
         handler.ioQueue = dispatch_queue_create("com.handleLocalCacheQueue", DISPATCH_QUEUE_SERIAL);

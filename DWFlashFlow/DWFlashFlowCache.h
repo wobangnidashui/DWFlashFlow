@@ -64,7 +64,7 @@
  @param diskSize 最大磁盘缓存空间(单位B,即1KB为1024)
  @return 实例
  */
-+(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(unsigned long long)memorySize maxDiskSize:(unsigned long long)diskSize;
++(instancetype)cacheHandlerWithMaxExpireInterval:(NSTimeInterval)expireInterval maxMemorySize:(NSUInteger)memorySize maxDiskSize:(NSUInteger)diskSize;
 
 //Initialize with default value.ExpireInterval is seconds in one week,memorySize is 2MB,diskSize is 100MB.
 ///以默认值初始化，其中超时时间为1周，内存缓存为2MB，磁盘缓存为100MB。
