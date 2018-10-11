@@ -26,6 +26,9 @@
  version 1.0.2
  添加customID，可以由开发者自行设置。方便在批量请求和链请求中区分数据来源
  
+ version 1.0.2.1
+ 修复释放request应用时的判空处理，防止无效移除导致的崩溃
+ 
  */
 
 #ifndef DWFlashFlow_h
