@@ -23,6 +23,9 @@
  version 1.0.1
  添加缓存机制，修复请求链中cancelOnFailure初始值赋值错误问题
  
+ version 1.0.2
+ 添加customID，可以由开发者自行设置。方便在批量请求和链请求中区分数据来源
+ 
  */
 
 #ifndef DWFlashFlow_h

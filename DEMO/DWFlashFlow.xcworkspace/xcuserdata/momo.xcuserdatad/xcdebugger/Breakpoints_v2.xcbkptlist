@@ -10,23 +10,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "DWFlashFlow/ViewController.m"
-            timestampString = "549518377.99031"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "81"
-            endingLineNumber = "81"
-            landmarkName = "-batchRequest"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "DWFlashFlow/ViewController.m"
-            timestampString = "549518377.9907041"
+            timestampString = "549602567.5018359"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "103"
@@ -42,7 +26,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "DWFlashFlow/ViewController.m"
-            timestampString = "549518377.990955"
+            timestampString = "549602567.502095"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "117"
@@ -58,45 +42,29 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "DWFlashFlow/ViewController.m"
-            timestampString = "549518377.991192"
+            timestampString = "549602567.5023299"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "116"
             endingLineNumber = "116"
             landmarkName = "-requestChain"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[ViewController requestChain]"
-                  moduleName = "DWFlashFlow"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/momo/Desktop/Wicky/DWFlashFlow/DEMO/DWFlashFlow/ViewController.m"
-                  timestampString = "549518378.109409"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "116"
-                  endingLineNumber = "116"
-                  offsetFromSymbolStart = "414">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__30-[ViewController requestChain]_block_invoke_4"
-                  moduleName = "DWFlashFlow"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/momo/Desktop/Wicky/DWFlashFlow/DEMO/DWFlashFlow/ViewController.m"
-                  timestampString = "549518378.111936"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "117"
-                  endingLineNumber = "117"
-                  offsetFromSymbolStart = "124">
-               </Location>
-            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../DWFlashFlow/DWFlashFlowCache.m"
+            timestampString = "549603008.2921799"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "383"
+            endingLineNumber = "383"
+            landmarkName = "-cleanLoalDiskCacheWithCompletion:"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

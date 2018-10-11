@@ -89,7 +89,7 @@
 }
 
 -(void)dealloc {
-    NSLog(@"%@<%@> dealloc",NSStringFromClass([self class]) ,self.requestID);
+    NSLog(@"%@<%@> dealloc",NSStringFromClass([self class]) ,self.customID.length?self.customID:self.requestID);
 }
 
 #pragma mark --- tool func ---

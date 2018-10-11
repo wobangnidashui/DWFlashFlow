@@ -70,6 +70,7 @@
 -(id)copyWithZone:(NSZone *)zone {
     DWFlashFlowRequest * r = [[[self class] allocWithZone:zone] init];
     configRequestWithStatus(r, self.status);
+    r.customID = self.customID;
     r.finishAfterComplete = self.finishAfterComplete;
     r.requestCompletion = [self.requestCompletion copy];
     r.apiURL = self.apiURL;

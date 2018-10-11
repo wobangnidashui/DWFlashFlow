@@ -39,6 +39,10 @@ typedef void(^RequestCompletion)(BOOL success,id response,NSError * error,DWFlas
 ///每个请求对象的唯一标识。
 @property (nonatomic ,copy ,readonly) NSString * requestID;
 
+//The custom ID for each request which is set by developer.It will use customID as key first in batchRequest and chainRequest.
+///由开发者设置的标识。批量请求和链请求中会优先使用customID作为合并key。
+@property (nonatomic ,copy) NSString * customID;
+
 //The current status for request.KVO is supported.
 ///请求的当前状态。支持KVO。
 @property (nonatomic ,assign ,readonly) DWFlashFlowRequestStatus status;

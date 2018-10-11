@@ -20,9 +20,26 @@
     [super viewDidLoad];
 //    [self singleRequest];
 //    [self addRequestDependency];
-//    [self batchRequest];
+    [self batchRequest];
 //    [self requestChain];
-    [self requestCache];
+//    [self requestCache];
+//    [self testCancel];
+}
+
+-(void)testCancel {
+    DWFlashFlowRequest * r = [DWFlashFlowRequest new];
+    r.fullURL = @"http://ozi0yn414.bkt.clouddn.com/MKJ-Time.mp3";
+    r.requestType = DWFlashFlowRequestTypeDownload;
+    r.requestProgress = ^(NSProgress *progress) {
+        NSLog(@"%@",progress);
+    };
+    r.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
+        NSLog(@"%@",response);
+    };
+    [r start];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [r cancel];
+    });
 }
 
 -(void)singleRequest {
@@ -75,12 +92,14 @@
 
 -(void)batchRequest {
     DWFlashFlowRequest * r1 = [DWFlashFlowRequest new];
+    r1.customID = @"testRequest";
     r1.cachePolicy = DWFlashFlowCachePolicyLocalOnly;
     r1.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");
     };
     DWFlashFlowRequest * r2 = [DWFlashFlowRequest new];
+    r2.customID = @"testDownload";
     r2.fullURL = @"http://ozi0yn414.bkt.clouddn.com/MKJ-Time.mp3";
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
