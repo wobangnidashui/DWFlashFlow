@@ -137,6 +137,9 @@ typedef id(^ProcessorBlock)(DWFlashFlowRequest * request,id data);
 ///注：1.系统对参数的实际预处理由 Linker 中 -preprocessorFromRequest: 方法决定。
 ///   2.原则上开发者重写Linker中 -preprocessorFromRequest: 方法时应保证若preprocessorBeforeRequest与全局回调同时存在，先调用preprocessorBeforeRequest，再调用全局回调。
 ///   3.预处理回调发生在请求发送之前。
+///   4.预处理回调中可以对请求做最后处理，可以修改除预处理回调和二次处理回调之外的所有属性（事实上我并不建议你在预处理中修改除了请求参数外的其他属性）
+///   5.预处理回调有两个入参，第一个为request对象，第二个为将要请求的请求参数。回调有一个返回值，将作为最终请求的实际参数
+///   6.预处理回调中若想修改headers或者URL时，请处理request.configuration中的对应值（此处修改configuration.actualParameters无效，该属性将在回调结束后被赋值为回调的返回值）
 @property (nonatomic ,copy) ProcessorBlock preprocessorBeforeRequest;
 @property (nonatomic ,assign) BOOL useGlobalPreprocessor;
 

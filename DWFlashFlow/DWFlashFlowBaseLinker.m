@@ -20,9 +20,11 @@
     }
     NSString * baseStr = globalManager().baseURL;
     if (baseStr.length && ![baseStr hasSuffix:@"/"]) {
-        baseStr = [baseStr stringByAppendingPathComponent:@""];
+        ///不使用 -stringByAppendingPathComponent: ，若使用则http://www.baidu.com将被转换为http:/www.baidu.com，与实际预期不同
+        baseStr = [baseStr stringByAppendingString:@"/"];
     }
-    return [NSURL URLWithString:r.apiURL relativeToURL:[NSURL URLWithString:baseStr]].absoluteString;
+    ///不使用 -URLWithString:relativeToURL: ，若使用则根据baseURL格式不同将产生不同行为，与实际预期不同
+    return [baseStr stringByAppendingString:r.apiURL];
 }
 
 -(NSDictionary *)parametersFromRequest:(DWFlashFlowRequest *)r {
@@ -92,7 +94,7 @@
 
 -(ProcessorBlock)preprocessorFromRequest:(DWFlashFlowRequest *)r {
     if (!r) {
-        return globalManager().globalPreprocessor;
+        return nil;
     }
     if (!r.useGlobalPreprocessor) {
         return r.preprocessorBeforeRequest;
@@ -102,7 +104,7 @@
 
 -(ProcessorBlock)reprocessorFromRequest:(DWFlashFlowRequest *)r {
     if (!r) {
-        return globalManager().globalReprocessing;
+        return nil;
     }
     if (!r.useGlobalReprocessing) {
         return r.reprocessingAfterResponse;

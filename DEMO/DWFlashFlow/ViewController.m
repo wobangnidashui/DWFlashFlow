@@ -28,7 +28,7 @@
 
 -(void)testCancel {
     DWFlashFlowRequest * r = [DWFlashFlowRequest new];
-    r.fullURL = @"http://ozi0yn414.bkt.clouddn.com/MKJ-Time.mp3";
+    r.fullURL = @"http://pj253633a.bkt.clouddn.com/Silver%20Scrapes.mp3";
     r.requestType = DWFlashFlowRequestTypeDownload;
     r.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
@@ -98,9 +98,10 @@
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");
     };
+    [DWFlashFlowManager manager].baseURL = @"http://pj253633a.bkt.clouddn.com";
     DWFlashFlowRequest * r2 = [DWFlashFlowRequest new];
     r2.customID = @"testDownload";
-    r2.fullURL = @"http://ozi0yn414.bkt.clouddn.com/MKJ-Time.mp3";
+    r2.apiURL = @"Silver%20Scrapes.mp3";
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
     };
@@ -122,7 +123,7 @@
         NSLog(@"r1 finish");
     };
     DWFlashFlowRequest * r2 = [DWFlashFlowRequest new];
-    r2.fullURL = @"http://ozi0yn414.bkt.clouddn.com/MKJ-Time.mp3";
+    r2.fullURL = @"http://pj253633a.bkt.clouddn.com/Silver%20Scrapes.mp3";
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
     };
