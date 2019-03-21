@@ -96,6 +96,8 @@
             [request privateCancel];
         }
         [request.task cancel];
+    }
+    if (request.status != DWFlashFlowRequestFinish) {
         configRequestWithStatus(request, DWFlashFlowRequestCanceled);
     }
 }

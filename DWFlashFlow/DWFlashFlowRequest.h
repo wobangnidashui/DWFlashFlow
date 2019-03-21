@@ -156,10 +156,6 @@ typedef id(^ProcessorBlock)(DWFlashFlowRequest * request,id data);
 ///展示进度或完成的回调。他们应该配合 -start 方法使用。如果使用 -startWithCompletion: 或 -startWithProgress:completion:这两个方法，那么这两个属性将被忽略，转而使用你所传入的参数。
 @property (nonatomic ,copy) ProgressCallback requestProgress;
 
-//Indicates the error for request after completion.
-///请求完成后的错误。
-@property (nonatomic ,strong ,readonly) NSError * error;
-
 //Indicate the savePath for each download request.If destination is available will use it,otherwise use downloadSavePath.
 ///指定下载路径。如果destination可用则使用回调，否则下载地址将有downloadSavePath指定。
 @property (nonatomic ,copy) DestinationCallback destination;

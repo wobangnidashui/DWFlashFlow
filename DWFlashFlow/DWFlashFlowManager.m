@@ -30,6 +30,24 @@
 
 @end
 
+@interface DWFlashFlowRequest (Private)
+
+@property (nonatomic ,copy) RequestCompletion oriCompletion;
+
+@end
+
+@implementation DWFlashFlowRequest (Private)
+
+-(RequestCompletion)oriCompletion {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+-(void)setOriCompletion:(RequestCompletion)oriCompletion {
+    objc_setAssociatedObject(self, @selector(oriCompletion), oriCompletion, OBJC_ASSOCIATION_COPY);
+}
+
+@end
+
 @interface DWFlashFlowBatchRequest (Private)
 
 @property (nonatomic ,assign) BOOL successStatus;
@@ -82,10 +100,17 @@
 
 
 
-#define isKindofClass(A) ([request isKindOfClass:[A class]])
+#define isKindofClass(A) varIsKindofClass(request,A)
+#define varIsKindofClass(var,A) ([var isKindOfClass:[A class]])
 
 NSString * const responseCacheErrorDomain = @"com.DWFlashFlow.error.responseCache";
+NSString * const requestCanceledErrorDomain = @"com.DWFlashFlow.error.requestCanceled";
+NSString * const requestBatchFailErrorDomian = @"com.DWFlashFlow.error.requestFail.batch";
+NSString * const requestChainFailErrorDomain = @"com.DWFlashFlow.error.requestFail.chain";
 const NSInteger CacheOnlyButNoCache = 10001;
+const NSInteger RequestCanceled = 10002;
+const NSInteger BatchRequestFail = 10003;
+const NSInteger ChainReuqestFail = 10004;
 
 static DWFlashFlowManager * mgr = nil;
 
@@ -402,16 +427,25 @@ static DWFlashFlowManager * mgr = nil;
     __weak typeof(request)weakR = request;
     
     NSBlockOperation * blockOP = [NSBlockOperation blockOperationWithBlock:^{
-        NSMutableDictionary * temp = @{}.mutableCopy;
-        
+        NSMutableDictionary * tempRes = @{}.mutableCopy;
+        NSMutableDictionary * tempErr = @{}.mutableCopy;
         [weakR.requests enumerateObjectsUsingBlock:^(__kindof DWFlashFlowAbstractRequest * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             ///优先使用customID，提高可阅读性
             if (obj.response && (obj.requestID.length || obj.customID.length)) {
-                [temp setValue:obj.response forKey:obj.customID.length?obj.customID:obj.requestID];
+                [tempRes setValue:obj.response forKey:obj.customID.length?obj.customID:obj.requestID];
+            }
+            if (obj.error && (obj.requestID.length || obj.customID.length)) {
+                [tempErr setValue:obj.error forKey:obj.customID.length?obj.customID:obj.requestID];
             }
         }];
         ///赋值响应数据
-        configRequestWithResponse(request, temp);
+        configRequestWithResponse(weakR, tempRes);
+        if (tempErr.allKeys.count) {
+            NSError * error = [NSError errorWithDomain:requestBatchFailErrorDomian code:BatchRequestFail userInfo:@{@"errMsg":@"One of the request in batchRequest get an error.",@"errInfo":tempErr}];
+            ///赋值错误信息
+            configRequestWithError(weakR, error);
+        }
+        
         ///更改请求状态
         configRequestWithStatus(weakR, DWFlashFlowRequestFinish);
         
@@ -422,7 +456,7 @@ static DWFlashFlowManager * mgr = nil;
         
         if (completion) {
             ///回调请求结果
-            completion(weakR.successStatus,weakR.response,nil,weakR);
+            completion(weakR.successStatus,weakR.response,weakR.error,weakR);
         }
         ///标志完成任务
         if (weakR.finishAfterComplete) {
@@ -443,6 +477,10 @@ static DWFlashFlowManager * mgr = nil;
         };
         obj.requestCompletion = ab;
         
+        if (varIsKindofClass(obj,DWFlashFlowRequest)) {
+            ((DWFlashFlowRequest *)obj).oriCompletion = objCpl;
+        }
+        
         ///添加依赖
         [blockOP addDependency:obj];
     }];
@@ -459,16 +497,25 @@ static DWFlashFlowManager * mgr = nil;
     __weak typeof(request)weakR = request;
     
     NSBlockOperation * blockOP = [NSBlockOperation blockOperationWithBlock:^{
-        NSMutableDictionary * temp = @{}.mutableCopy;
-        
+        NSMutableDictionary * tempRes = @{}.mutableCopy;
+        NSMutableDictionary * tempErr = @{}.mutableCopy;
         [weakR.requests enumerateObjectsUsingBlock:^(__kindof DWFlashFlowAbstractRequest * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             ///优先使用customID，提高可阅读性
             if (obj.response && (obj.requestID.length || obj.customID.length)) {
-                [temp setValue:obj.response forKey:obj.customID.length?obj.customID:obj.requestID];
+                [tempRes setValue:obj.response forKey:obj.customID.length?obj.customID:obj.requestID];
+            }
+            if (obj.error && (obj.requestID.length || obj.customID.length)) {
+                [tempErr setValue:obj.error forKey:obj.customID.length?obj.customID:obj.requestID];
             }
         }];
         ///赋值响应数据
-        configRequestWithResponse(request, temp);
+        configRequestWithResponse(request, tempRes);
+        if (tempErr.allKeys.count) {
+            NSError * error = [NSError errorWithDomain:requestChainFailErrorDomain code:ChainReuqestFail userInfo:@{@"errMsg":@"One of the request in chainRequest get an error.",@"errInfo":tempErr}];
+            ///赋值错误数据
+            configRequestWithError(weakR, error);
+        }
+        
         ///更改请求状态
         configRequestWithStatus(weakR, DWFlashFlowRequestFinish);
         
@@ -479,7 +526,7 @@ static DWFlashFlowManager * mgr = nil;
         
         if (completion) {
             ///回调请求结果
-            completion(weakR.successStatus,weakR.response,nil,weakR);
+            completion(weakR.successStatus,weakR.response,weakR.error,weakR);
         }
         ///标志完成任务
         if (weakR.finishAfterComplete) {
@@ -512,6 +559,10 @@ static DWFlashFlowManager * mgr = nil;
         };
         obj.requestCompletion = ab;
         
+        if (varIsKindofClass(obj,DWFlashFlowRequest)) {
+            ((DWFlashFlowRequest *)obj).oriCompletion = objCpl;
+        }
+        
         ///添加依赖
         if (lastR) {
             [obj addDependency:lastR];
@@ -538,6 +589,13 @@ static DWFlashFlowManager * mgr = nil;
     if (request.status == DWFlashFlowRequestExcuting || request.status == DWFlashFlowRequestSuspend) {
         [request.requests enumerateObjectsUsingBlock:^(__kindof DWFlashFlowAbstractRequest * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             [obj cancel];
+            if (obj.status == DWFlashFlowRequestCanceled && varIsKindofClass(obj,DWFlashFlowRequest)) {
+                NSError * error = [NSError errorWithDomain:requestCanceledErrorDomain code:RequestCanceled userInfo:@{@"errMsg":@"The request has been canceled before start."}];
+                configRequestWithError(obj, error);
+                if (((DWFlashFlowRequest *)obj).oriCompletion) {
+                    ((DWFlashFlowRequest *)obj).oriCompletion(NO, nil,obj.error , obj);
+                }
+            }
         }];
         configRequestWithStatus(request, DWFlashFlowRequestCanceled);
     }
@@ -606,7 +664,7 @@ static inline void configRequestWithConfig(DWFlashFlowRequest * r,DWFlashFlowReq
     [r setValue:config forKey:@"_configuration"];
 }
 
-static inline void configRequestWithError(DWFlashFlowRequest * r,NSError * error) {
+static inline void configRequestWithError(DWFlashFlowAbstractRequest * r,NSError * error) {
     [r setValue:error forKey:@"_error"];
 }
 
@@ -666,7 +724,7 @@ static void enumerateRequest(DWFlashFlowManager * m,void(^enumerator)(NSString *
 -(DWFlashFlowBaseLinker *)linker {
     if (!_linker) {
         id temp = [[[self class] classForLinker] new];
-        if ([temp isKindOfClass:[DWFlashFlowBaseLinker class]]) {
+        if (varIsKindofClass(temp, DWFlashFlowBaseLinker)) {
             _linker = temp;
         }
     }

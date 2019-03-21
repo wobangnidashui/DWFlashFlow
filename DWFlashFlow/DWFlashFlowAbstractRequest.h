@@ -59,6 +59,10 @@ typedef void(^RequestCompletion)(BOOL success,id response,NSError * error,DWFlas
 ///请求的响应，只读，由框架进行赋值。
 @property (nonatomic ,strong ,readonly) id response;
 
+//The error for request.It only set by framework.
+///请求的错误信息，只读，由框架进行赋值
+@property (nonatomic ,strong ,readonly) NSError * error;
+
 /**
  Indicates this operation has been finished.
  

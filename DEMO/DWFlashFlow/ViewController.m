@@ -20,8 +20,8 @@
     [super viewDidLoad];
 //    [self singleRequest];
 //    [self addRequestDependency];
-    [self batchRequest];
-//    [self requestChain];
+//    [self batchRequest];
+    [self requestChain];
 //    [self requestCache];
 //    [self testCancel];
 }
