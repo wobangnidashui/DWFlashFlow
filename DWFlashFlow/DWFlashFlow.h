@@ -26,6 +26,13 @@
  version 1.0.2
  添加customID，可以由开发者自行设置。方便在批量请求和链请求中区分数据来源
  
+ version 1.0.2.1
+ 修复释放request引用时的判空处理，防止无效移除导致的崩溃
+ 
+ version 1.0.2.2
+ 修复URL拼接时与预期结果不同的问题，修改baseLinker中当request为nil时返回的处理block为nil
+ 添加预处理相关注释，阐明预处理回调具体行为作用及行为规范
+ 
  */
 
 #ifndef DWFlashFlow_h

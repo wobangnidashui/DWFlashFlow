@@ -225,6 +225,9 @@ static DWFlashFlowManager * mgr = nil;
 }
 
 -(void)removeRequestWithKey:(NSString *)key {
+    if (!key.length) {
+        return;
+    }
     [self.requestContainer removeObjectForKey:key];
 }
 
