@@ -21,9 +21,9 @@
 //    [self singleRequest];
 //    [self addRequestDependency];
 //    [self batchRequest];
-//    [self requestChain];
+    [self requestChain];
 //    [self requestCache];
-    [self testCancel];
+//    [self testCancel];
 }
 
 -(void)testCancel {

@@ -440,6 +440,9 @@ static DWFlashFlowManager * mgr = nil;
             if (obj.error && (obj.requestID.length || obj.customID.length)) {
                 [tempErr setValue:obj.error forKey:obj.customID.length?obj.customID:obj.requestID];
             }
+            if (varIsKindofClass(obj,DWFlashFlowRequest)) {
+                ((DWFlashFlowRequest *)obj).oriCompletion = nil;
+            }
         }];
         ///赋值响应数据
         configRequestWithResponse(weakR, tempRes);
@@ -510,6 +513,9 @@ static DWFlashFlowManager * mgr = nil;
             if (obj.error && (obj.requestID.length || obj.customID.length)) {
                 [tempErr setValue:obj.error forKey:obj.customID.length?obj.customID:obj.requestID];
             }
+            if (varIsKindofClass(obj,DWFlashFlowRequest)) {
+                ((DWFlashFlowRequest *)obj).oriCompletion = nil;
+            }
         }];
         ///赋值响应数据
         configRequestWithResponse(request, tempRes);
@@ -531,6 +537,7 @@ static DWFlashFlowManager * mgr = nil;
             ///回调请求结果
             completion(weakR.successStatus,weakR.response,weakR.error,weakR);
         }
+        
         ///标志完成任务
         if (weakR.finishAfterComplete) {
             [weakR finishOperation];
