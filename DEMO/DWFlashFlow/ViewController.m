@@ -21,14 +21,14 @@
 //    [self singleRequest];
 //    [self addRequestDependency];
 //    [self batchRequest];
-    [self requestChain];
+//    [self requestChain];
 //    [self requestCache];
-//    [self testCancel];
+    [self testCancel];
 }
 
 -(void)testCancel {
     DWFlashFlowRequest * r = [DWFlashFlowRequest new];
-    r.fullURL = @"http://pj253633a.bkt.clouddn.com/Silver%20Scrapes.mp3";
+    r.fullURL = @"http://music.163.com/song/media/outer/url?id=364757.mp3";
     r.requestType = DWFlashFlowRequestTypeDownload;
     r.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
@@ -98,10 +98,10 @@
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");
     };
-    [DWFlashFlowManager manager].baseURL = @"http://pj253633a.bkt.clouddn.com";
+    [DWFlashFlowManager manager].baseURL = @"http://music.163.com";
     DWFlashFlowRequest * r2 = [DWFlashFlowRequest new];
     r2.customID = @"testDownload";
-    r2.apiURL = @"Silver%20Scrapes.mp3";
+    r2.apiURL = @"song/media/outer/url?id=364757.mp3";
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
     };
@@ -123,7 +123,7 @@
         NSLog(@"r1 finish");
     };
     DWFlashFlowRequest * r2 = [DWFlashFlowRequest new];
-    r2.fullURL = @"http://pj253633a.bkt.clouddn.com/Silver%20Scrapes.mp3";
+    r2.fullURL = @"http://music.163.com/song/media/outer/url?id=364757.mp3";
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
     };
