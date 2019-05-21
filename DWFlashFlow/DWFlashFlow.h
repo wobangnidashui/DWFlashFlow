@@ -39,6 +39,9 @@
  version 1.0.2.4
  任务完成时，移除临时回调
  
+ version 1.0.2.5
+ 修复调用 -startWithCompletion系方法导致的重复请求。
+ 
  */
 
 #ifndef DWFlashFlow_h

@@ -194,7 +194,7 @@ typedef id(^ProcessorBlock)(DWFlashFlowRequest * request,id data);
  
  @disc 1.-startWithCompletion: 时默认无进度回调
  
-       2.调用 -start 方法时会使用request对象的requestProgress和requestCompletion作为回调。另外两个 -start... 系方法均已实际传入参数为准。
+       2.调用 -start 方法时会使用request对象的requestProgress和requestCompletion作为回调。另外两个 -start... 系方法会将非空的参数赋值给request对象，并作为回调。
  */
 -(void)startWithProgress:(ProgressCallback)progress completion:(RequestCompletion)completion;
 -(void)startWithCompletion:(RequestCompletion)completion;

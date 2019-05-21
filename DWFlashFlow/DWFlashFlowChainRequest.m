@@ -21,8 +21,10 @@
 }
 
 -(void)startWithCompletion:(RequestCompletion)completion {
+    if (completion) {
+        self.requestCompletion = completion;
+    }
     [super start];
-    [DWFlashFlowManager sendRequest:self completion:completion];
 }
 
 -(void)cancelByProducingResumeData:(void (^)(NSData *))completionHandler {

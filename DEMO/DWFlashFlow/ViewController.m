@@ -117,7 +117,7 @@
 
 -(void)requestChain {
     DWFlashFlowRequest * r1 = [DWFlashFlowRequest new];
-    r1.cachePolicy = DWFlashFlowCachePolicyLocalOnly;
+//    r1.cachePolicy = DWFlashFlowCachePolicyLocalOnly;
     r1.fullURL = @"https://www.easy-mock.com/mock/5ab8d2273838ca14983dc100/zdwApi/test";
     r1.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r1 finish");
@@ -127,6 +127,7 @@
     r2.requestProgress = ^(NSProgress *progress) {
         NSLog(@"%@",progress);
     };
+    r2.downloadSavePath = [NSHomeDirectory() stringByAppendingPathComponent:@"a.mp3"];
     r2.requestCompletion = ^(BOOL success, id response, NSError *error, DWFlashFlowAbstractRequest *request) {
         NSLog(@"r2 finish");
     };
